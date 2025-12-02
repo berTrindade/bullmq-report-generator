@@ -106,49 +106,34 @@ sequenceDiagram
 **Layered Architecture:**
 
 ```mermaid
-graph TB
-    subgraph Client["Client Layer"]
-        UI[Browser UI]
-    end
+flowchart LR
+    UI[Browser UI]
+    API[Express API :3000]
+    Queue[BullMQ Queue]
+    Redis[(Redis :6379)]
+    Worker[Worker Process]
+    DB[(PostgreSQL :5432)]
+    FS[File Storage]
+    SMTP[SMTP Server]
     
-    subgraph API["API Layer"]
-        Express[Express Server :3000]
-    end
+    UI -->|HTTP Requests| API
+    API -->|Add Jobs| Queue
+    Queue <-->|Store| Redis
+    Worker -->|Poll Jobs| Queue
+    API <-->|Read/Write| DB
+    Worker <-->|Update Status| DB
+    Worker -->|Save PDFs| FS
+    API -->|Download PDFs| FS
+    Worker -->|Send Emails| SMTP
     
-    subgraph Queue["Queue Layer"]
-        BullMQ[BullMQ Queue]
-        Redis[(Redis :6379)]
-    end
-    
-    subgraph Worker["Worker Layer"]
-        WorkerProc[Worker Process]
-    end
-    
-    subgraph Data["Persistence Layer"]
-        DB[(PostgreSQL :5432)]
-        FS[File System]
-    end
-    
-    subgraph External["External Services"]
-        SMTP[Gmail SMTP]
-    end
-    
-    UI -->|HTTP| Express
-    Express -->|SQL| DB
-    Express -->|Enqueue| BullMQ
-    BullMQ -.->|Storage| Redis
-    WorkerProc -->|Dequeue| BullMQ
-    WorkerProc -->|SQL| DB
-    WorkerProc -->|Write| FS
-    WorkerProc -->|Email| SMTP
-    Express -->|Read| FS
-    
-    style Client fill:#e1f5ff
+    style UI fill:#e1f5ff
     style API fill:#fff4e1
     style Queue fill:#f0e1ff
+    style Redis fill:#f0e1ff
     style Worker fill:#ffe1e1
-    style Data fill:#e1ffe1
-    style External fill:#ffe8e1
+    style DB fill:#e1ffe1
+    style FS fill:#e1ffe1
+    style SMTP fill:#ffe8e1
 ```
 
 **Key Components:**
