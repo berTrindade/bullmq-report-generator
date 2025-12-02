@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Async Generation UI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="main-container">
+        <div class="content-wrapper">
+            <!-- List View -->
+            <div id="listView">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1>Reports</h1>
+                    <p class="subtitle">Generate asynchronous reports and track their status over time.</p>
+                </div>
+
+                <!-- Generate Button -->
+                <div class="action-section">
+                    <button id="generateBtn" class="btn-generate">
+                        Generate Report
+                    </button>
+                </div>
+
+                <!-- Filters Card -->
+                <div class="card filters-card">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="statusFilter">Status Filter</label>
+                            <select id="statusFilter" class="filter-select">
+                                <option value="all">All</option>
+                                <option value="PENDING">Queued</option>
+                                <option value="RUNNING">Processing</option>
+                                <option value="READY">Completed</option>
+                                <option value="FAILED">Failed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="filter-group filter-search">
+                            <label for="searchInput">Search by Report ID or Email</label>
+                            <input type="text" id="searchInput" class="filter-input" placeholder="Search...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Card -->
+                <div class="card reports-card">
+                    <div class="card-header">
+                        <h2>Your Reports</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="reports-table">
+                            <thead>
+                                <tr>
+                                    <th>Report ID</th>
+                                    <th>Created At</th>
+                                    <th>Status</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsList">
+                                <!-- Reports will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="paginationContainer" class="pagination-container" style="display: none;">
+                    <div class="pagination-info">
+                        <span id="paginationInfo"></span>
+                    </div>
+                    <div class="pagination-controls" id="paginationControls">
+                        <!-- Pagination buttons will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail View -->
+            <div id="detailView" style="display: none;">
+                <button id="backBtn" class="btn-back">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Back to Reports
+                </button>
+
+                <div class="card detail-card">
+                    <div class="detail-content">
+                        <h1 id="detailTitle">Report Details</h1>
+                        <p class="detail-subtitle">Report ID: <span id="detailReportId" class="report-id"></span></p>
+
+                        <div class="detail-section">
+                            <p class="detail-label">Created at</p>
+                            <p id="detailCreatedAt" class="detail-value"></p>
+                        </div>
+
+                        <div class="detail-section">
+                            <p class="detail-label">Status</p>
+                            <div id="detailStatusBadge"></div>
+                        </div>
+
+                        <div class="detail-section">
+                            <p class="detail-label">Progress</p>
+                            <div id="detailProgress"></div>
+                        </div>
+
+                        <div class="detail-section">
+                            <p class="detail-label">Details</p>
+                            <p id="detailMessage" class="detail-message"></p>
+                        </div>
+
+                        <div class="detail-actions" id="detailActions">
+                            <!-- Action buttons will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
