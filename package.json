@@ -1,0 +1,32 @@
+{
+    "name": "node-job-queue-poc",
+    "version": "1.0.0",
+    "description": "Simple async report generation with Web → Queue → Worker",
+    "engines": {
+        "node": ">=24.11.0",
+        "npm": ">=11.6.4"
+    },
+    "scripts": {
+        "dev:api": "tsx watch --env-file=.env src/api.ts",
+        "dev:worker": "tsx watch --env-file=.env src/worker.ts",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "bullmq": "^5.26.0",
+        "express": "^4.21.1",
+        "ioredis": "^5.4.1",
+        "nodemailer": "^6.9.16",
+        "pdfkit": "^0.15.0",
+        "pg": "^8.13.1"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.9.3",
+        "@types/nodemailer": "^6.4.17",
+        "@types/pdfkit": "^0.13.5",
+        "@types/pg": "^8.11.10",
+        "knip": "^5.70.2",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.2"
+    }
+}
