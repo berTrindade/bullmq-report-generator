@@ -525,7 +525,7 @@ curl -X DELETE http://localhost:3000/reports/550e8400-...
 watch -n 2 'docker exec -it reports-db psql -U postgres -d reports_db -c "SELECT id, status, progress, extract(epoch from (NOW() - updated_at)) as seconds_ago FROM report_requests ORDER BY created_at DESC LIMIT 5;"'
 ```
 
-This uses the [`watch`](https://gitlab.com/procps-ng/procps) command to update every 2 seconds showing:
+This command updates every 2 seconds showing:
 - Latest 5 reports
 - Current status and progress
 - Seconds since last update
