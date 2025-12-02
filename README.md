@@ -64,53 +64,43 @@ sequenceDiagram
     participant Browser
     participant API
     participant DB as PostgreSQL
-    participant Queue as BullMQ<br/>(Redis)
+    participant Queue as BullMQ
     participant Worker
     participant FS as File System
     participant SMTP
     
-    rect rgb(230, 245, 255)
-        Note over User,Queue: Phase 1: Job Creation (Async)
-        User->>Browser: Click "Generate Report"
-        Browser->>API: POST /reports
-        API->>DB: INSERT job (status: PENDING)
-        API->>Queue: Enqueue job
-        API-->>Browser: 202 Accepted<br/>{id, status: PENDING}
-        Browser-->>User: Show "Job queued"
+    Note over User,Queue: Phase 1: Job Creation
+    User->>Browser: Click Generate Report
+    Browser->>API: POST /reports
+    API->>DB: INSERT job (PENDING)
+    API->>Queue: Enqueue job
+    API-->>Browser: 202 Accepted
+    Browser-->>User: Show Job queued
+    
+    Note over Queue,SMTP: Phase 2: Background Processing
+    Queue->>Worker: Assign job
+    Worker->>DB: UPDATE status: RUNNING
+    Worker->>Worker: Process job phases
+    Worker->>DB: UPDATE progress
+    Worker->>FS: Save PDF file
+    Worker->>DB: UPDATE status: READY
+    Worker->>SMTP: Send notification
+    Worker->>Queue: Mark complete
+    
+    Note over User,DB: Phase 3: Status Polling
+    loop Every 1 second
+        Browser->>API: GET /reports/:id/status
+        API->>DB: SELECT status
+        API-->>Browser: Return status
+        Browser-->>User: Update UI
     end
     
-    rect rgb(240, 255, 240)
-        Note over Queue,SMTP: Phase 2: Background Processing
-        Queue->>Worker: Assign job
-        Worker->>DB: UPDATE status: RUNNING, progress: 10%
-        Worker->>Worker: Generate PDF (15s)
-        Worker->>DB: UPDATE progress: 30%
-        Worker->>DB: UPDATE progress: 50%
-        Worker->>FS: Save PDF file
-        Worker->>DB: UPDATE progress: 70%
-        Worker->>DB: UPDATE status: READY, progress: 100%<br/>file_path
-        Worker->>SMTP: Send notification email
-        Worker->>Queue: Mark complete
-    end
-    
-    rect rgb(255, 250, 240)
-        Note over User,DB: Phase 3: Status Polling
-        loop Every 1 second
-            Browser->>API: GET /reports/:id/status
-            API->>DB: SELECT status, progress
-            API-->>Browser: {status, progress}
-            Browser-->>User: Update UI
-        end
-    end
-    
-    rect rgb(245, 240, 255)
-        Note over User,FS: Phase 4: Download
-        Browser->>API: GET /reports/:id/download
-        API->>DB: Verify status: READY
-        API->>FS: Read PDF file
-        API-->>Browser: PDF file
-        Browser-->>User: Download PDF
-    end
+    Note over User,FS: Phase 4: Download
+    Browser->>API: GET /reports/:id/download
+    API->>DB: Verify READY
+    API->>FS: Read PDF
+    API-->>Browser: Return PDF
+    Browser-->>User: Download
 ```
 
 **Layered Architecture:**
@@ -118,40 +108,40 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph Client["Client Layer"]
-        UI[Browser UI<br/>Polling every 1s]
+        UI[Browser UI]
     end
     
     subgraph API["API Layer"]
-        Express[Express Server<br/>Port 3000]
+        Express[Express Server :3000]
     end
     
     subgraph Queue["Queue Layer"]
-        BullMQ[BullMQ Queue<br/>Redis-backed]
-        Redis[(Redis<br/>Port 6379)]
+        BullMQ[BullMQ Queue]
+        Redis[(Redis :6379)]
     end
     
     subgraph Worker["Worker Layer"]
-        WorkerProc[Worker Process<br/>Concurrency: 1]
+        WorkerProc[Worker Process]
     end
     
     subgraph Data["Persistence Layer"]
-        DB[(PostgreSQL<br/>Port 5432)]
-        FS[File System<br/>./storage/reports/]
+        DB[(PostgreSQL :5432)]
+        FS[File System]
     end
     
     subgraph External["External Services"]
-        SMTP[Gmail SMTP<br/>Port 587]
+        SMTP[Gmail SMTP]
     end
     
-    UI -->|POST/GET/DELETE| Express
-    Express -->|INSERT/SELECT/UPDATE| DB
-    Express -->|Add job| BullMQ
-    BullMQ -.->|stores jobs| Redis
-    WorkerProc -->|Poll jobs| BullMQ
-    WorkerProc -->|UPDATE| DB
-    WorkerProc -->|Write file| FS
-    WorkerProc -->|Send email| SMTP
-    Express -->|Read file| FS
+    UI -->|HTTP| Express
+    Express -->|SQL| DB
+    Express -->|Enqueue| BullMQ
+    BullMQ -.->|Storage| Redis
+    WorkerProc -->|Dequeue| BullMQ
+    WorkerProc -->|SQL| DB
+    WorkerProc -->|Write| FS
+    WorkerProc -->|Email| SMTP
+    Express -->|Read| FS
     
     style Client fill:#e1f5ff
     style API fill:#fff4e1
@@ -187,15 +177,15 @@ stateDiagram-v2
     FAILED --> [*]
     
     note right of PENDING
-        Queue: 'waiting' or 'delayed'
+        Queue: waiting or delayed
         Can cancel via job.remove()
         Progress: 0%
     end note
     
     note right of RUNNING
-        Queue: 'active'
+        Queue: active
         Cannot cancel
-        Progress: 10% → 100%
+        Progress: 10% to 100%
         Updates every few seconds
     end note
     
@@ -219,45 +209,37 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant Q as BullMQ Queue<br/>(Redis)
+    participant Q as BullMQ Queue
     participant W1 as Worker Process
     participant DB as PostgreSQL
     
-    rect rgb(230, 255, 230)
-        Note over U,DB: Phase 1: Normal Processing
-        U->>Q: Create job
-        Q->>W1: Assign job (lock acquired)
-        W1->>DB: Update status: RUNNING
-        W1->>W1: Processing job...
-    end
+    Note over U,DB: Phase 1: Normal Processing
+    U->>Q: Create job
+    Q->>W1: Assign job (lock acquired)
+    W1->>DB: Update status: RUNNING
+    W1->>W1: Processing job...
     
-    rect rgb(255, 230, 230)
-        Note over W1: Phase 2: Worker Crashes
-        W1-xW1: Process terminated unexpectedly
-        Note over Q: Job locked but worker is gone<br/>Lock duration: 60 seconds
-    end
+    Note over W1: Phase 2: Worker Crashes
+    W1-xW1: Process terminated
+    Note over Q: Job locked but worker gone (60s lock)
     
-    rect rgb(255, 245, 230)
-        Note over Q,DB: Phase 3: Stall Detection
-        loop Every 5 seconds
-            Q->>Q: Check for stalled jobs
-        end
-        Note over Q: After 60 seconds...<br/>Lock has expired!
-        Q->>Q: Detect stalled job
-        Q->>Q: Move job back to 'waiting'
+    Note over Q,DB: Phase 3: Stall Detection
+    loop Every 5 seconds
+        Q->>Q: Check for stalled jobs
     end
+    Note over Q: After 60 seconds lock expires
+    Q->>Q: Detect stalled job
+    Q->>Q: Move job back to waiting
     
-    rect rgb(230, 240, 255)
-        Note over W1,DB: Phase 4: Recovery
-        W1->>Q: Worker restarts and polls queue
-        Q->>W1: Re-assign same job
-        W1->>DB: Resume: status RUNNING
-        W1->>W1: Process completes
-        W1->>DB: Update: status READY
-        W1->>Q: Mark job completed
-    end
+    Note over W1,DB: Phase 4: Recovery
+    W1->>Q: Worker restarts and polls
+    Q->>W1: Re-assign same job
+    W1->>DB: Resume: status RUNNING
+    W1->>W1: Process completes
+    W1->>DB: Update: status READY
+    W1->>Q: Mark job completed
     
-    Note over U,DB: Job successfully recovered!
+    Note over U,DB: Job successfully recovered
 ```
 
 **BullMQ handles recovery automatically:**
