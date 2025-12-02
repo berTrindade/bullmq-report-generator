@@ -106,34 +106,42 @@ sequenceDiagram
 **Layered Architecture:**
 
 ```mermaid
-flowchart LR
-    UI[Browser UI]
-    API[Express API :3000]
-    Queue[BullMQ Queue]
-    Redis[(Redis :6379)]
-    Worker[Worker Process]
-    DB[(PostgreSQL :5432)]
-    FS[File Storage]
-    SMTP[SMTP Server]
+graph TB
+    subgraph Client["Client Layer"]
+        UI[Browser UI<br/>Polling every 1s]
+    end
     
-    UI -->|HTTP Requests| API
-    API -->|Add Jobs| Queue
-    Queue <-->|Store| Redis
-    Worker -->|Poll Jobs| Queue
-    API <-->|Read/Write| DB
-    Worker <-->|Update Status| DB
-    Worker -->|Save PDFs| FS
-    API -->|Download PDFs| FS
-    Worker -->|Send Emails| SMTP
+    subgraph API["API Layer"]
+        Express[Express Server<br/>Port 3000]
+    end
     
-    style UI fill:#e1f5ff
-    style API fill:#fff4e1
-    style Queue fill:#f0e1ff
-    style Redis fill:#f0e1ff
-    style Worker fill:#ffe1e1
-    style DB fill:#e1ffe1
-    style FS fill:#e1ffe1
-    style SMTP fill:#ffe8e1
+    subgraph Queue["Queue Layer"]
+        BullMQ[BullMQ Queue<br/>Redis-backed]
+        Redis[(Redis<br/>Port 6379)]
+    end
+    
+    subgraph Worker["Worker Layer"]
+        WorkerProc[Worker Process<br/>Concurrency: 1]
+    end
+    
+    subgraph Data["Persistence Layer"]
+        DB[(PostgreSQL<br/>Port 5432)]
+        FS[File System<br/>./storage/reports/]
+    end
+    
+    subgraph External["External Services"]
+        SMTP[Gmail SMTP<br/>Port 587]
+    end
+    
+    UI -->|POST/GET/DELETE| Express
+    Express -->|INSERT/SELECT/UPDATE| DB
+    Express -->|Add job| BullMQ
+    BullMQ -.->|stores jobs| Redis
+    WorkerProc -->|Poll jobs| BullMQ
+    WorkerProc -->|UPDATE| DB
+    WorkerProc -->|Write file| FS
+    WorkerProc -->|Send email| SMTP
+    Express -->|Read file| FS
 ```
 
 **Key Components:**
