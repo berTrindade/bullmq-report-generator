@@ -154,6 +154,7 @@ graph TB
 
 <details>
 <summary><b>Job Lifecycle</b></summary>
+
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: User creates report
