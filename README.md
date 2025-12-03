@@ -267,7 +267,7 @@ Open http://localhost:3000 to see:
 
 ---
 
-<details open>
+<details>
 <summary><h2>Learning Outcomes</h2></summary>
 
 This POC demonstrates key concepts in distributed systems and background job processing:
@@ -338,7 +338,7 @@ CREATE TABLE report_requests (
 
 ---
 
-<details open>
+<details>
 <summary><h2>Getting Started</h2></summary>
 
 ### Prerequisites
