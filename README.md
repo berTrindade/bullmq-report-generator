@@ -422,6 +422,7 @@ docker-compose down
 | **API Server** | `npm run dev:api` | Start API server with hot reload (port 3000) |
 | **Worker Process** | `npm run dev:worker` | Start background worker with hot reload |
 | **Build** | `npm run build` | Compile TypeScript to JavaScript |
+| **Clean** | `npm run clean` | Clear all jobs, queue, and generated files |
 
 **Development Tools:**
 - **[tsx](https://tsx.is/)** - TypeScript execution with hot reload (no build step needed)
