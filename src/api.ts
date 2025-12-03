@@ -5,6 +5,19 @@ import { reportQueue } from './queue';
 import { storage } from './storage';
 import config from './config';
 
+// Error response interface for consistency
+interface ApiError {
+  error: string;
+  message: string;
+  details?: unknown;
+}
+
+// UUID validation helper
+const isValidUUID = (id: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
+
 const app = express();
 app.use(express.json());
 
@@ -39,7 +52,10 @@ app.get('/reports', async (req, res) => {
     res.json(cleanReports);
   } catch (error) {
     console.error('Error listing reports:', error);
-    res.status(500).json({ error: 'Failed to list reports' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'Failed to list reports. Please try again later.'
+    } as ApiError);
   }
 });
 
@@ -65,8 +81,10 @@ app.post('/reports', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating report:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ error: 'Failed to create report', details: errorMessage });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'Failed to create report. Please try again later.'
+    } as ApiError);
   }
 });
 
@@ -78,20 +96,35 @@ app.get('/reports/:id/download', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Invalid report ID format'
+      } as ApiError);
+    }
+
     const report = await db.getReport(id);
     if (!report) {
-      return res.status(404).json({ error: 'Report not found' });
+      return res.status(404).json({ 
+        error: 'Not Found',
+        message: 'Report not found'
+      } as ApiError);
     }
 
     if (report.status !== 'READY') {
       return res.status(400).json({ 
-        error: 'Report not ready',
-        status: report.status 
-      });
+        error: 'Bad Request',
+        message: 'Report not ready for download',
+        details: { status: report.status }
+      } as ApiError);
     }
 
     if (!report.file_path) {
-      return res.status(500).json({ error: 'Report file not found' });
+      return res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: 'Report file not found'
+      } as ApiError);
     }
 
     const pdfBuffer = await storage.readPdf(report.file_path);
@@ -106,7 +139,10 @@ app.get('/reports/:id/download', async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Error downloading report:', error);
-    res.status(500).json({ error: 'Failed to download report' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'Failed to download report. Please try again later.'
+    } as ApiError);
   }
 });
 
@@ -118,17 +154,29 @@ app.delete('/reports/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ 
+        error: 'Bad Request',
+        message: 'Invalid report ID format'
+      } as ApiError);
+    }
+    
     const report = await db.getReport(id);
     
     if (!report) {
-      return res.status(404).json({ error: 'Report not found' });
+      return res.status(404).json({ 
+        error: 'Not Found',
+        message: 'Report not found'
+      } as ApiError);
     }
 
     if (report.status !== 'PENDING') {
       return res.status(400).json({ 
-        error: 'Can only cancel pending reports',
-        status: report.status 
-      });
+        error: 'Bad Request',
+        message: 'Can only cancel pending reports',
+        details: { status: report.status }
+      } as ApiError);
     }
 
     const jobs = await reportQueue.getJobs(['waiting', 'delayed']);
@@ -151,7 +199,10 @@ app.delete('/reports/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error cancelling report:', error);
-    res.status(500).json({ error: 'Failed to cancel report' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'Failed to cancel report. Please try again later.'
+    } as ApiError);
   }
 });
 
