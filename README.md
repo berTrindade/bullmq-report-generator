@@ -37,6 +37,12 @@ This project demonstrates a complete **job queue system** for background process
 
 ---
 
+## Demo
+
+https://github.com/user-attachments/assets/8dc74435-ac14-4b38-8388-3c75add73359
+
+---
+
 ## Features
 
 - **Background Job Processing** - Offload PDF generation to worker process without blocking API
