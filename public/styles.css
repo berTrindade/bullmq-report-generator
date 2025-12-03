@@ -144,6 +144,14 @@ body {
   transition: all 0.2s;
 }
 
+.filter-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23a3a3a3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
 .filter-select:focus,
 .filter-input:focus {
   border-color: var(--primary);
@@ -159,6 +167,7 @@ body {
 .reports-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .reports-table thead {
@@ -166,7 +175,7 @@ body {
 }
 
 .reports-table th {
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1rem;
   text-align: left;
   font-size: 0.75rem;
   font-weight: 500;
@@ -175,8 +184,23 @@ body {
   letter-spacing: 0.05em;
 }
 
-.reports-table th.text-right {
-  text-align: right;
+.reports-table th:nth-child(1) {
+  width: 35%;
+  padding-left: 1.5rem;
+}
+
+.reports-table th:nth-child(2) {
+  width: 20%;
+}
+
+.reports-table th:nth-child(3) {
+  width: 30%;
+}
+
+.reports-table th:nth-child(4) {
+  width: 15%;
+  text-align: left;
+  padding-right: 1.5rem;
 }
 
 .reports-table tbody tr {
@@ -200,9 +224,17 @@ body {
 }
 
 .reports-table td {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
   font-size: 0.875rem;
   vertical-align: middle;
+}
+
+.reports-table td:nth-child(1) {
+  padding-left: 1.5rem;
+}
+
+.reports-table td:nth-child(4) {
+  padding-right: 1.5rem;
 }
 
 .report-id {
@@ -221,6 +253,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-height: 48px;
+  justify-content: center;
 }
 
 .status-badge {
@@ -232,6 +266,7 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   width: fit-content;
+  height: 24px;
 }
 
 .status-dot {
@@ -297,8 +332,11 @@ body {
 
 /* Progress Bar */
 .progress-container {
-  margin-top: 0.5rem;
   width: 100%;
+  height: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .progress-bar {
@@ -321,6 +359,7 @@ body {
   color: var(--muted-foreground);
   margin-top: 0.25rem;
   display: block;
+  line-height: 1;
 }
 
 /* Action Buttons */
@@ -682,10 +721,131 @@ body {
     grid-template-columns: 1fr;
   }
   
-  .reports-table th,
+  /* Card-based layout for mobile */
+  .table-wrapper {
+    padding: 0;
+    min-height: auto;
+    overflow: visible;
+  }
+  
+  .reports-table thead {
+    display: none;
+  }
+  
+  .reports-table,
+  .reports-table tbody,
+  .reports-table tr {
+    display: block;
+    width: 100%;
+  }
+  
+  .reports-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .reports-table tr {
+    margin-bottom: 0;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    height: auto;
+    position: static;
+    display: flex;
+    flex-direction: column;
+    clear: both;
+  }
+  
+  .reports-table tr:hover {
+    background: var(--muted);
+  }
+  
+  .reports-table tr.empty-row {
+    display: none;
+  }
+  
   .reports-table td {
-    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 1rem;
+    text-align: left;
+    border: none;
+    height: auto;
+    min-height: 20px;
+  }
+  
+  .reports-table td > * {
+    display: block;
+  }
+  
+  .reports-table td:nth-child(1),
+  .reports-table td:nth-child(4) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .reports-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  
+  .reports-table td:first-child {
+    margin-bottom: 0.75rem;
+  }
+  
+  .reports-table td:nth-child(2),
+  .reports-table td:nth-child(3) {
+    margin-bottom: 0.75rem;
+  }
+  
+  .reports-table td:last-child {
+    margin-bottom: 0;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  
+  .reports-table td:last-child::before {
+    display: none;
+  }
+  
+  .report-id {
     font-size: 0.8125rem;
+    word-break: break-all;
+    line-height: 1.4;
+  }
+  
+  .report-date {
+    font-size: 0.875rem;
+  }
+  
+  .btn-action {
+    width: 100%;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .status-cell {
+    gap: 0.5rem;
+  }
+  
+  .status-badge {
+    font-size: 0.75rem;
+  }
+  
+  .progress-text {
+    font-size: 0.6875rem;
   }
   
   .toast-container {

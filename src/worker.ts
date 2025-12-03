@@ -28,30 +28,35 @@ async function processReport(job: Job<ReportJobData>): Promise<void> {
     await db.updateStatus(reportId, 'RUNNING');
     await db.updateProgress(reportId, 10, 'Job started');
     console.log(`[Worker] Job picked up! Status: ${report.status} -> RUNNING`);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pause to show 10%
     
     // Simulate realistic work phases (demo only - mimics data fetching, processing, etc.)
     console.log(`[Worker] Processing job ${reportId}...`);
     
     // Phase 1: Fetch data from database/API
     console.log(`[Worker] [Phase 1/3] Fetching report data...`);
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await db.updateProgress(reportId, 30, 'Data fetched successfully');
-    console.log(`[Worker] Data fetching complete (3s)`);
+    console.log(`[Worker] Data fetching complete`);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pause to show 30%
     
     // Phase 2: Process and transform data
     console.log(`[Worker] [Phase 2/3] Processing and transforming data...`);
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await db.updateProgress(reportId, 50, 'Data processing complete');
-    console.log(`[Worker] Data processing complete (5s)`);
+    console.log(`[Worker] Data processing complete`);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pause to show 50%
 
     // Phase 3: Generate PDF document
     console.log(`[Worker] [Phase 3/3] Rendering PDF document...`);
     await db.updateProgress(reportId, 60, 'Generating PDF');
     console.log(`[Worker] Generating PDF content...`);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pause to show 60%
     
     const pdfBuffer = await generatePdf({ type: 'demo', format: 'pdf' });
     await db.updateProgress(reportId, 70, 'PDF generated, saving to storage');
     console.log(`[Worker] PDF generated successfully (${pdfBuffer.length} bytes)`);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pause to show 70%
 
     // Save to local storage
     const fileName = `${reportId}.pdf`;
@@ -59,6 +64,8 @@ async function processReport(job: Job<ReportJobData>): Promise<void> {
     await storage.savePdf(fileName, pdfBuffer);
     
     await db.updateProgress(reportId, 85, 'Finalizing report');
+    console.log(`[Worker] Finalizing report`);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pause to show 85%
 
     await db.updateStatus(reportId, 'READY', fileName);
     await db.updateProgress(reportId, 100, 'Report ready');

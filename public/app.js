@@ -129,9 +129,34 @@ class ReportApp {
       return;
     }
 
-    // Sort by created date (newest first)
+    // Sort with priority: RUNNING first, then PENDING (oldest to newest for queue order), then others by newest first
     const sortedReports = [...filteredReports]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      .sort((a, b) => {
+        // Priority order for status
+        const statusPriority = {
+          'RUNNING': 1,
+          'PENDING': 2,
+          'READY': 3,
+          'FAILED': 4,
+          'CANCELLED': 5
+        };
+        
+        const aPriority = statusPriority[a.status] || 99;
+        const bPriority = statusPriority[b.status] || 99;
+        
+        // If different status priorities, sort by priority
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // Within PENDING status, sort oldest first (queue order)
+        if (a.status === 'PENDING' && b.status === 'PENDING') {
+          return new Date(a.created_at) - new Date(b.created_at);
+        }
+        
+        // For all other statuses with same priority, sort newest first
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
 
     // Pagination
     const totalPages = Math.ceil(sortedReports.length / this.itemsPerPage);
@@ -140,14 +165,16 @@ class ReportApp {
     const paginatedReports = sortedReports.slice(startIndex, endIndex);
 
     container.innerHTML = paginatedReports.map(report => {
-      const createdDate = new Date(report.created_at).toLocaleString('en-US', {
+      const date = new Date(report.created_at);
+      const dateStr = date.toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit'
       });
-      const shortId = report.id.length > 8 ? report.id.substring(0, 8) : report.id;
+      const hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const createdDate = `${dateStr}, ${hours}:${minutes} ${ampm}`;
       
       // Build status cell with optional progress
       let statusHTML = '';
@@ -173,10 +200,12 @@ class ReportApp {
                           report.status === 'CANCELLED' ? 'CANCELLED' : 
                           report.status;
         statusHTML = `
-          <span class="status-badge status-${report.status.toLowerCase()}">
-            <span class="status-dot"></span>
-            ${statusLabel}
-          </span>
+          <div class="status-cell">
+            <span class="status-badge status-${report.status.toLowerCase()}">
+              <span class="status-dot"></span>
+              ${statusLabel}
+            </span>
+          </div>
         `;
       }
 
@@ -195,10 +224,10 @@ class ReportApp {
 
       return `
         <tr>
-          <td><span class="report-id">${shortId}</span></td>
-          <td><span class="report-date">${createdDate}</span></td>
-          <td>${statusHTML}</td>
-          <td class="text-right">${actionButton}</td>
+          <td data-label="Report ID"><span class="report-id">${report.id}</span></td>
+          <td data-label="Created At"><span class="report-date">${createdDate}</span></td>
+          <td data-label="Status">${statusHTML}</td>
+          <td data-label="Actions">${actionButton}</td>
         </tr>
       `;
     }).join('');
@@ -345,13 +374,16 @@ class ReportApp {
     document.getElementById('detailReportId').textContent = report.id;
 
     // Update created at
-    const createdDate = new Date(report.created_at).toLocaleString('en-US', {
+    const date = new Date(report.created_at);
+    const dateStr = date.toLocaleString('en-US', {
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: '2-digit'
     });
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const createdDate = `${dateStr}, ${hours}:${minutes} ${ampm}`;
     document.getElementById('detailCreatedAt').textContent = createdDate;
 
     // Update status badge
