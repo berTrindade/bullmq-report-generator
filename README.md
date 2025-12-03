@@ -450,11 +450,6 @@ POST /reports
 GET /reports
 ```
 
-### Check Report Status
-```bash
-GET /reports/:id/status
-```
-
 ### Download Report
 ```bash
 GET /reports/:id/download
@@ -469,9 +464,6 @@ DELETE /reports/:id
 ```bash
 # Create a report
 curl -X POST http://localhost:3000/reports
-
-# Check status
-curl http://localhost:3000/reports/550e8400-.../status
 
 # Download when ready
 curl http://localhost:3000/reports/550e8400-.../download -o report.pdf

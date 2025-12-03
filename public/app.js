@@ -281,7 +281,7 @@ class ReportApp {
 
   async downloadReport(reportId) {
     try {
-      const response = await fetch(`/reports/${reportId}`);
+      const response = await fetch(`/reports/${reportId}/download`);
 
       if (response.ok) {
         const blob = await response.blob();

@@ -111,51 +111,6 @@ app.get('/reports/:id/download', async (req, res) => {
 });
 
 /**
- * GET /reports/:id
- * Download report PDF (alias for /reports/:id/download)
- */
-app.get('/reports/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const report = await db.getReport(id);
-    
-    if (!report) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
-
-    if (report.status === 'PENDING' || report.status === 'RUNNING') {
-      return res.status(202).json({ 
-        status: report.status,
-        message: 'Report is still being generated'
-      });
-    }
-
-    if (report.status === 'FAILED') {
-      return res.status(500).json({ 
-        error: 'Report generation failed',
-        message: report.error_message
-      });
-    }
-
-    if (!report.file_path) {
-      return res.status(500).json({ error: 'Report file not found' });
-    }
-
-    const pdfBuffer = await storage.readPdf(report.file_path);
-    
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="report-${id}.pdf"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
-    
-    res.send(pdfBuffer);
-  } catch (error) {
-    console.error('Error downloading report:', error);
-    res.status(500).json({ error: 'Failed to download report' });
-  }
-});
-
-/**
  * DELETE /reports/:id
  * Cancel a pending report
  */
