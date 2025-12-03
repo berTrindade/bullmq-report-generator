@@ -347,8 +347,8 @@ With nvm installed, the correct version will be automatically selected when you 
 
 ```bash
 # 1. Clone the repository
-git clone <your-repo-url>
-cd node-job-queue-poc
+git clone https://github.com/berTrindade/bullmq-report-generator.git
+cd bullmq-report-generator
 
 # 2. Ensure you're using the correct Node.js version
 nvm use
@@ -374,7 +374,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=reports_db
 DB_USER=postgres
-DB_PASSWORD=postgres
+DB_PASSWORD=password
 
 # Redis (defaults work with Docker Compose)
 REDIS_HOST=localhost
