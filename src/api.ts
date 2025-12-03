@@ -200,31 +200,6 @@ app.delete('/reports/:id', async (req, res) => {
   }
 });
 
-/**
- * GET /reports/:id/status
- * Check report status without downloading
- */
-app.get('/reports/:id/status', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const report = await db.getReport(id);
-    
-    if (!report) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
-
-    res.json({
-      id: report.id,
-      status: report.status,
-      created_at: report.created_at,
-      updated_at: report.updated_at
-    });
-  } catch (error) {
-    console.error('Error fetching status:', error);
-    res.status(500).json({ error: 'Failed to fetch status' });
-  }
-});
-
 app.listen(config.app.port, () => {
   console.log(`API server running on port ${config.app.port}`);
 });
