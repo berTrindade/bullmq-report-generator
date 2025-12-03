@@ -8,17 +8,10 @@ A demonstration of background job processing using BullMQ (Redis-based job queue
 2. [Demo](#demo)
 3. [Features](#features)
 4. [Architecture](#architecture)
-   - [System Overview](#system-overview)
-   - [Job Lifecycle](#job-lifecycle)
-   - [Crash Recovery](#crash-recovery)
 5. [UI Preview](#ui-preview)
 6. [Learning Outcomes](#learning-outcomes)
 7. [Tech Stack](#tech-stack)
 8. [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Setup](#setup)
-   - [Running the API and Worker](#running-the-api-and-worker)
-   - [Available Scripts](#available-scripts)
 9. [API Endpoints](#api-endpoints)
 10. [Testing the Flow](#testing-the-flow)
 11. [Future Improvements](#future-improvements)
@@ -58,7 +51,8 @@ https://github.com/user-attachments/assets/5a043407-1d43-4e59-b8cb-c9ee4b36b014
 
 ## Architecture
 
-### System Overview
+<details>
+<summary><b>System Overview</b></summary>
 
 **Request Flow:**
 
@@ -156,7 +150,10 @@ graph TB
 - **Data** - PostgreSQL for job metadata, filesystem for PDF files
 - **External** - SMTP for email notifications when jobs complete
 
-### Job Lifecycle
+</details>
+
+<details>
+<summary><b>Job Lifecycle</b></summary>
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: User creates report
@@ -199,7 +196,10 @@ stateDiagram-v2
     end note
 ```
 
-### Crash Recovery
+</details>
+
+<details>
+<summary><b>Crash Recovery</b></summary>
 
 **What happens when the worker crashes?**
 
@@ -245,6 +245,8 @@ sequenceDiagram
 - **`maxStalledCount: 2`** - Allows up to 2 stalls before marking job as failed
 - **`attempts: 3`** - Retries failed jobs up to 3 times with [exponential backoff](https://docs.bullmq.io/guide/retrying-failing-jobs) (2s, 4s, 8s delays)
 
+</details>
+
 ---
 
 ## UI Preview
@@ -265,7 +267,8 @@ Open http://localhost:3000 to see:
 
 ---
 
-## Learning Outcomes
+<details open>
+<summary><h2>Learning Outcomes</h2></summary>
 
 This POC demonstrates key concepts in distributed systems and background job processing:
 
@@ -300,6 +303,8 @@ This POC demonstrates key concepts in distributed systems and background job pro
 - [Microsoft - Web-Queue-Worker Architecture](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/web-queue-worker) - Architecture pattern used in this project
 - [Microsoft - Competing Consumers Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/competing-consumers) - How multiple workers can process from the same queue
 
+</details>
+
 ---
 
 ## Tech Stack
@@ -333,7 +338,8 @@ CREATE TABLE report_requests (
 
 ---
 
-## Getting Started
+<details open>
+<summary><h2>Getting Started</h2></summary>
 
 ### Prerequisites
 
@@ -456,6 +462,8 @@ docker-compose down
 - **TypeScript** - Type safety and modern JavaScript features
 - **[knip](https://github.com/webpro-nl/knip)** - Find unused files, dependencies, and exports
 
+</details>
+
 ---
 
 ## API Endpoints
@@ -528,7 +536,8 @@ curl -X DELETE http://localhost:3000/reports/550e8400-...
 
 ---
 
-## Testing the Flow
+<details>
+<summary><h2>Testing the Flow</h2></summary>
 
 ### 1. Basic Flow
 1. Open http://localhost:3000
@@ -614,9 +623,12 @@ Manually simulate a failure and retry:
 3. After exhaustion, status becomes FAILED
 4. Click "Retry" in the UI to create a new job
 
+</details>
+
 ---
 
-## Future Improvements
+<details>
+<summary><h2>Future Improvements</h2></summary>
 
 **Taking this to production:**
 - Add user authentication and authorization ([Passport.js](https://www.passportjs.org/), [Auth0](https://auth0.com/), [Clerk](https://clerk.com/))
@@ -636,3 +648,5 @@ Manually simulate a failure and retry:
 - Job dependencies and chaining ([BullMQ flows](https://docs.bullmq.io/guide/flows))
 - Admin dashboard for queue monitoring ([Bull Board](https://github.com/felixmosh/bull-board), custom React/Vue dashboard)
 - Dead letter queue for permanently failed jobs ([pattern explanation](https://aws.amazon.com/what-is/dead-letter-queue/) - manually move [failed jobs](https://docs.bullmq.io/guide/retrying-failing-jobs) to separate queue after exhausting retries)
+
+</details>
