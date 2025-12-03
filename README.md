@@ -39,16 +39,13 @@ This project demonstrates a complete **job queue system** for background process
 
 ## Features
 
-**Background Job Processing** - Async PDF generation using separate worker process  
-**Job Queue Management** - BullMQ with Redis for reliable job orchestration  
-**Automatic Retries** - 3 attempts with exponential backoff (2s, 4s, 8s delays)  
-**Stall Detection** - Automatically recovers jobs when worker crashes  
-**Job Cancellation** - Cancel pending jobs before processing starts  
-**Manual Retry** - Retry failed jobs from the UI  
-**Real-time Updates** - Progress tracking with polling (PENDING → RUNNING → READY)  
-**Idempotency** - Safe to retry jobs without duplicate processing  
-**Email Notifications** - SMTP integration for download links  
-**Error Handling** - Detailed error messages and graceful failure states  
+- **Background Job Processing** - Offload PDF generation to worker process without blocking API
+- **Job Queue with BullMQ** - Redis-backed queue with automatic retries and stall detection
+- **Job Cancellation** - Cancel pending jobs before processing starts
+- **Progress Tracking** - Real-time status updates (PENDING → RUNNING → READY/FAILED)
+- **Error Recovery** - Automatic retries (3 attempts) and manual retry from UI
+- **Email Notifications** - Send download links via SMTP when reports are ready
+- **Simple Web UI** - Monitor jobs, view progress, download PDFs, handle failures
 
 ---
 
@@ -89,9 +86,9 @@ sequenceDiagram
     
     Note over User,DB: Phase 3: Status Polling
     loop Every 1 second
-        Browser->>API: GET /reports/:id/status
-        API->>DB: SELECT status
-        API-->>Browser: Return status
+        Browser->>API: GET /reports
+        API->>DB: SELECT all reports
+        API-->>Browser: Return reports list
         Browser-->>User: Update UI
     end
     
@@ -130,7 +127,7 @@ graph TB
     end
     
     subgraph External["External Services"]
-        SMTP[Gmail SMTP<br/>Port 587]
+        SMTP[SMTP Server<br/>Ethereal/Gmail]
     end
     
     UI -->|POST/GET/DELETE| Express
@@ -146,7 +143,7 @@ graph TB
 
 **Key Components:**
 - **Client** - Simple HTML/JS UI with auto-refresh polling
-- **API** - REST endpoints (create, list, download, cancel, status)
+- **API** - REST endpoints (create, list, download, cancel)
 - **Queue** - BullMQ manages job distribution, retries, and stall detection
 - **Worker** - Separate process that consumes jobs from the queue
 - **Data** - PostgreSQL for job metadata, filesystem for PDF files
@@ -335,7 +332,6 @@ CREATE TABLE report_requests (
 
 - **Node.js** 24.11.1 (LTS) or higher - [Download Node.js](https://nodejs.org/)
 - **[Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)**
-- **Gmail account** for email notifications - [Setup App Password](https://support.google.com/accounts/answer/185833)
 
 **Node.js Version Management:**
 
@@ -362,12 +358,16 @@ docker-compose up -d
 # 3. Install dependencies
 npm install
 
-# 4. Configure environment
+# 4. Configure email for testing
+# Generate free test credentials at https://ethereal.email/create
 cp .env.example .env
-# Edit .env with your Gmail SMTP credentials
+# Edit .env and add your Ethereal Email credentials
 ```
 
 **Environment Variables:**
+
+The defaults work out of the box. You only need to configure email if you want to test notifications.
+
 ```bash
 # Database (defaults work with Docker Compose)
 DB_HOST=localhost
@@ -380,18 +380,38 @@ DB_PASSWORD=password
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-# Email (configure for notifications)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-EMAIL_FROM=your-email@gmail.com
-
 # Application
 APP_PORT=3000
 APP_BASE_URL=http://localhost:3000
 STORAGE_DIR=./storage/reports
 ```
+
+**Email Setup:**
+
+For testing email notifications, use **[Ethereal Email](https://ethereal.email)** - a fake SMTP service that captures emails for testing:
+
+1. Go to **https://ethereal.email/create**
+2. Ethereal generates temporary credentials instantly (no signup required)
+3. Copy the **SMTP credentials** shown on the page
+4. Add them to your `.env` file:
+
+```bash
+# Ethereal Email (for testing - emails captured in test inbox)
+EMAIL_HOST=smtp.ethereal.email
+EMAIL_PORT=587
+EMAIL_USER=your-generated-user@ethereal.email
+EMAIL_PASS=your-generated-password
+EMAIL_FROM=noreply@example.com  # Any email address (not provided by Ethereal)
+```
+
+5. View captured emails at the inbox URL provided by Ethereal
+
+**Why Ethereal?**
+- No signup required
+- Instant credentials
+- Safe for demos (no real emails sent to actual recipients)
+- Web interface to view captured emails
+- Perfect for development and testing
 
 ### Running the API and Worker
 
@@ -450,15 +470,41 @@ POST /reports
 ```bash
 GET /reports
 ```
+**Response:**
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "READY",
+    "progress": 100,
+    "progress_message": "Report generation complete",
+    "error_message": null,
+    "created_at": "2025-12-03T10:00:00Z",
+    "updated_at": "2025-12-03T10:00:15Z",
+    "file_path": true
+  }
+]
+```
 
 ### Download Report
 ```bash
 GET /reports/:id/download
 ```
+**Response:**
+- Content-Type: `application/pdf`
+- Content-Disposition: `attachment; filename="report-{id}.pdf"`
+- Binary PDF file
 
 ### Cancel Pending Report
 ```bash
 DELETE /reports/:id
+```
+**Response:**
+```json
+{
+  "message": "Report cancelled successfully",
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}
 ```
 
 **Example:**
@@ -515,7 +561,7 @@ curl -X DELETE http://localhost:3000/reports/550e8400-...
 > **Note:** macOS users need to install `watch` first: `brew install watch`
 
 ```bash
-watch -n 2 'docker exec -it reports-db psql -U postgres -d reports_db -c "SELECT id, status, progress, extract(epoch from (NOW() - updated_at)) as seconds_ago FROM report_requests ORDER BY created_at DESC LIMIT 5;"'
+watch -n 2 'docker compose exec -T reports-db psql -U postgres -d reports_db -c "SELECT id, status, progress, extract(epoch from (NOW() - updated_at)) as seconds_ago FROM report_requests ORDER BY created_at DESC LIMIT 5;"'
 ```
 
 This command updates every 2 seconds showing:
