@@ -128,7 +128,7 @@ graph TB
     end
     
     subgraph External["External Services"]
-        SMTP[SMTP Server<br/>Ethereal/Gmail]
+        SMTP[SMTP Server<br/>Ethereal Email]
     end
     
     UI -->|POST/GET/DELETE| Express

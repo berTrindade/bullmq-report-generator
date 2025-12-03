@@ -16,11 +16,11 @@ export default {
     directory: process.env.STORAGE_DIR || './storage/reports'
   },
   email: {
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
     port: parseInt(process.env.EMAIL_PORT || '587'),
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASS || 'your-app-password',
-    from: process.env.EMAIL_FROM || 'your-email@gmail.com'
+    user: process.env.EMAIL_USER || 'user@ethereal.email',
+    pass: process.env.EMAIL_PASS || 'password',
+    from: process.env.EMAIL_FROM || 'noreply@example.com'
   },
   app: {
     port: parseInt(process.env.APP_PORT || '3000'),
