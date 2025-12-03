@@ -39,7 +39,6 @@ This project demonstrates a complete **job queue system** for background process
 
 ## Demo
 
-
 https://github.com/user-attachments/assets/5a043407-1d43-4e59-b8cb-c9ee4b36b014
 
 ---
